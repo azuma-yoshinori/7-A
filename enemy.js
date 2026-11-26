@@ -8,7 +8,6 @@ function createEnemy(x, vx) {
 // ② 入れる：敵をまとめて入れる配列（７-６で入れ直すので let）
 let enemies = [];
 
-
 // 最初の敵を入れ直す（★ main.js の resetGame から呼ばれる）
 function resetEnemies() {
   enemies=[];
@@ -19,8 +18,6 @@ function resetEnemies() {
   special.type = "faster";                // この敵だけが持つ値を足す
   enemies.push(special);                  // 入れる
 }
-
-
 
 // ③ 動かす：配列の敵を1体ずつ取り出して、同じ処理をする
 function updateEnemies(dt) {
@@ -51,6 +48,7 @@ function collideWithEnemies(prevBottom) {
     if (aabb(player, enemy) && prevBottom <= enemy.y && player.vy > 0) {
       enemy.alive = false;            // 倒した（状態を書き換える）
       player.vy = -JUMP_SPEED / 2;    // 踏んだら、少し跳ねる
+      score = score + 1;              // 点数を足す（★ main.js の score を書き換える）
     } else if (aabb(player, enemy) && player.hitTimer <= 0) {
       player.hp = player.hp - 1;      // 横から当たった：HP を減らす（★ player.js の値を書き換える）
       player.hitTimer = HIT_TIME;     // しばらく当たらない
