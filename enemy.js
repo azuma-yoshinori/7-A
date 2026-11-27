@@ -18,12 +18,30 @@ function resetEnemies() {
   enemies.push(createEnemy(200, 80));
   enemies.push(createEnemy(380, -120));
   enemies.push(createEnemy(540, 60));
+
   const special = createEnemy(300, 80);   // 作る（ほかの敵と同じ）
   special.type = "faster";                // この敵だけが持つ値を足す
   enemies.push(special);                  // 入れる
+
+  // ★ ここから追加：サイン波で蛇行する敵
+  const wavy = createEnemy(450, 40);
+  wavy.type = "wavy";
+  wavy.baseY = wavy.y; // 基準となるY座標を記録
+  wavy.phase = 0;      // 揺れ用のタイマー
+  enemies.push(wavy);
+
+  // ★ もう1体追加：途中で一瞬止まってから突進する敵
+  const rusher = createEnemy(600, -40);
+  rusher.type = "rusher";
+  rusher.state = "move"; // "move" -> "pause" -> "dash"
+  rusher.timer = 1.2;    // 最初の行動までの秒数
+  enemies.push(rusher);
+
   spawnTimer = 0;
   nextSpawn = 2;
 }
+
+
 
 // 敵を時間で出す（タイマーの形・くり返す）
 function spawnEnemies(dt) {
@@ -52,15 +70,60 @@ function updateEnemies(dt) {
         enemy.vx = -1000;
       }
     }
-    enemy.x = enemy.x + enemy.vx * dt;
+    // 蛇行する敵（wavy）：横に進みながら上下に揺れる
+    if (enemy.type === "wavy") {
+      enemy.phase = (enemy.phase || 0) + dt * 5;
+      const baseY = enemy.baseY ?? (floor.y - 32);
+      // 床（baseY）より下にめり込まないよう、上側を中心に揺らす
+      enemy.y = Math.min(baseY, baseY - Math.abs(Math.sin(enemy.phase)) * 28);
+    }
+
+    // 止まってから突進する敵（rusher）
+    if (enemy.type === "rusher") {
+      enemy.timer = (enemy.timer ?? 1.2) - dt;
+
+      if (!enemy.baseVx) {
+        enemy.baseVx = enemy.vx || -120;
+      }
+
+      if (enemy.state === "move") {
+        enemy.x += enemy.baseVx * dt;
+        if (enemy.timer <= 0) {
+          enemy.state = "pause";
+          enemy.timer = 0.4; // 一瞬止まる（予兆）
+        }
+      } else if (enemy.state === "pause") {
+        // 止まっている間は x を動かさない
+        if (enemy.timer <= 0) {
+          enemy.state = "dash";
+          enemy.timer = 0.45; // 突進する時間
+          const dir = player.x < enemy.x ? -1 : 1;
+          enemy.dashVx = dir * 360;
+        }
+      } else if (enemy.state === "dash") {
+        enemy.x += enemy.dashVx * dt;
+        if (enemy.timer <= 0) {
+          enemy.state = "move";
+          enemy.timer = 1.2;
+          enemy.baseVx = enemy.dashVx > 0 ? 120 : -120;
+        }
+      }
+    } else {
+      // wavy や通常の敵は共通の横移動
+      enemy.x = enemy.x + enemy.vx * dt;
+    }
     // 端を越えたら、位置を戻して、向きを反対に（５-４の跳ね返り）
     if (enemy.x < 0) {
       enemy.x = 0;
-      enemy.vx = -enemy.vx;
+      enemy.vx = Math.abs(enemy.vx);
+      if (enemy.baseVx) enemy.baseVx = Math.abs(enemy.baseVx);
+      if (enemy.dashVx) enemy.dashVx = Math.abs(enemy.dashVx);
     }
     if (enemy.x + enemy.w > canvas.width) {
       enemy.x = canvas.width - enemy.w;
-      enemy.vx = -enemy.vx;
+      enemy.vx = -Math.abs(enemy.vx);
+      if (enemy.baseVx) enemy.baseVx = -Math.abs(enemy.baseVx);
+      if (enemy.dashVx) enemy.dashVx = -Math.abs(enemy.dashVx);
     }
   }
 }
@@ -82,12 +145,15 @@ function collideWithEnemies(prevBottom) {
 
 // ④ 描く：配列の敵を1体ずつ取り出して描く
 function drawEnemies() {
-  ctx.fillStyle = "#ff6b6b";
   for (const enemy of enemies) {
     if (enemy.type === "notice") {
-      ctx.fillStyle = "#ffd166";
+      ctx.fillStyle = "#ffd166"; // 黄色：近づくと急加速
+    } else if (enemy.type === "wavy") {
+      ctx.fillStyle = "#66d9ff"; // 水色：ぴょんぴょん揺れる
+    } else if (enemy.type === "rusher") {
+      ctx.fillStyle = enemy.state === "pause" ? "#ff9f43" : "#c084fc"; // 止まる時は橙、突進系は紫
     } else {
-      ctx.fillStyle = "#ff6b6b";
+      ctx.fillStyle = "#ff6b6b"; // 赤：通常
     }
     ctx.fillRect(enemy.x, enemy.y, enemy.w, enemy.h);
   }

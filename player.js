@@ -2,10 +2,10 @@
 
 const GRAVITY = 2000;
 const JUMP_SPEED = 700;
-const MOVE_SPEED = 240;
+const MOVE_SPEED = 300;
 const MAX_JUMPS = 2;          // 地面を離れてから跳べる回数（2段ジャンプ）
 const FALL_GRAVITY_RATE = 2;  // 落ちるときは、重力を何倍にするか
-const MAX_HP = 3;             // HP の最大
+const MAX_HP = 6;             // HP の最大
 const HIT_TIME = 1;           // 当たってから、当たらない時間（秒）
 
 const player = { x: 80, y: 20, w: 32, h: 32, vx: 0, vy: 0, isGrounded: false, jumpsLeft: MAX_JUMPS, state: "idle", frameIndex: 0, frameTimer: 0, facing: 1, hp: MAX_HP, hitTimer: 0  };
