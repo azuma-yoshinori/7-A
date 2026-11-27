@@ -77,7 +77,7 @@ function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawStage();
   if (gameState === "title") {
-    drawMessage("my game", "Enter で始める");
+    drawMessage("義弟ブラザーズ", "Enter で始める");
     drawAim();
     return;                 // タイトルでは、敵とプレイヤーは描かない
   }
@@ -88,7 +88,7 @@ function draw() {
     drawMessage("PAUSE", "P でつづける");
   }
   if (gameState === "gameover") {
-    drawMessage("GAME OVER", "SCORE " + score + "Enter でもう一度");
+    drawMessage("GAME OVER", "SCORE " + score + "左クリック でもう一度");
   }
   drawAim();                // いちばん最後
 }
